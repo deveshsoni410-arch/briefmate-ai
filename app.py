@@ -1,30 +1,30 @@
 import os
 
 import streamlit as st
-from langchain_openai import ChatOpenAI
+from google import genai
 
 
 APP_TITLE = "BriefMate AI (Beta)"
-MODEL_NAME = "gpt-4o-mini"
+MODEL_NAME = "gemini-2.5-flash-lite"
 
 
 def get_api_key() -> str | None:
     """Read the API key from Streamlit secrets first, then the shell environment."""
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
     try:
-        return st.secrets.get("OPENAI_API_KEY", api_key)
+        return st.secrets.get("GOOGLE_API_KEY") or st.secrets.get("GEMINI_API_KEY", api_key)
     except Exception:
         return api_key
 
 
 @st.cache_resource
-def get_llm(api_key: str) -> ChatOpenAI:
-    return ChatOpenAI(model=MODEL_NAME, temperature=0.2, api_key=api_key)
+def get_client(api_key: str) -> genai.Client:
+    return genai.Client(api_key=api_key)
 
 
-def run_prompt(llm: ChatOpenAI, prompt: str) -> str:
-    response = llm.invoke(prompt)
-    return response.content
+def run_prompt(client: genai.Client, prompt: str) -> str:
+    response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+    return response.text or "No response generated."
 
 
 st.set_page_config(page_title="Legal AI Assistant", page_icon=":scroll:", layout="centered")
@@ -35,16 +35,16 @@ st.caption(
 )
 
 api_key = get_api_key()
-if api_key and api_key.strip() == "sk-your-real-key-here":
+if api_key and api_key.strip() in {"paste-your-google-api-key-here", "paste-your-gemini-api-key-here"}:
     api_key = None
 
 if not api_key:
     st.warning(
-        "Add your OpenAI API key as OPENAI_API_KEY in Streamlit secrets or your environment before generating responses."
+        "Add your Gemini API key as GOOGLE_API_KEY in Streamlit secrets or your environment before generating responses."
     )
     st.stop()
 
-llm = get_llm(api_key)
+client = get_client(api_key)
 
 username = st.text_input("Enter your name")
 if username:
@@ -73,7 +73,7 @@ Question:
 """
         with st.spinner("Researching..."):
             try:
-                st.write(run_prompt(llm, prompt))
+                st.write(run_prompt(client, prompt))
             except Exception as exc:
                 st.error(f"Could not generate an answer: {exc}")
 
@@ -102,7 +102,7 @@ Text:
 """
         with st.spinner("Preparing brief..."):
             try:
-                st.write(run_prompt(llm, prompt))
+                st.write(run_prompt(client, prompt))
             except Exception as exc:
                 st.error(f"Could not generate a brief: {exc}")
 
@@ -130,6 +130,6 @@ Facts:
 """
         with st.spinner("Drafting..."):
             try:
-                st.write(run_prompt(llm, prompt))
+                st.write(run_prompt(client, prompt))
             except Exception as exc:
                 st.error(f"Could not generate a draft: {exc}")

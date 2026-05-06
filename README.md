@@ -1,6 +1,6 @@
 # BriefMate AI
 
-A Streamlit legal assistant prototype for legal research, case briefs, and Indian legal drafting.
+A Streamlit legal assistant prototype for legal research, case briefs, and Indian legal drafting. It uses Google Gemini for text generation.
 
 ## Setup
 
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 Create `.streamlit/secrets.toml` from the example file:
 
 ```toml
-OPENAI_API_KEY = "sk-your-key-here"
+GOOGLE_API_KEY = "paste-your-google-api-key-here"
 ```
 
 Run the app:
